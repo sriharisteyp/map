@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Tracking and Routing with Current Location</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<form id="routing-form">
+    <label for="destination">Destination Location:</label>
+    <input type="text" id="destination" name="destination" value="India" required>
+    <br>
+    <button type="submit">Get Route</button>
+</form>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+<script>
+    var map = L.map('map').setView([0, 0], 3); // Default to a map centered at (0,0)
+    var currentLocationMarker = L.marker([0, 0], { draggable: true }).addTo(map);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+    }).addTo(map);
+
+    var control = L.Routing.control({
+        routeWhileDragging: true,
+        waypoints: [
+            L.Routing.waypoint([0, 0], "Your Location"),
+            L.Routing.waypoint({name: "India"})
+        ]
+    }).addTo(map);
+
+    // Handle form submission to update the route
+    var form = document.getElementById('routing-form');
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        var destination = document.getElementById('destination').value;
+        control.setWaypoints([
+            L.Routing.waypoint(currentLocationMarker.getLatLng(), "Your Location"),
+            L.Routing.waypoint({name: destination})
+        ]);
+    });
+
+    // Track and update current location
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(function(position) {
+            var currentLocation = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+
+            currentLocationMarker.setLatLng(currentLocation);
+            map.setView(currentLocation, 13);
+        }, function(error) {
+            alert('Unable to retrieve your location.');
+        });
+    } else {
+        alert('Geolocation is not supported by your browser.');
+    }
+</script>
+</body>
+</html>
